@@ -1,0 +1,35 @@
+# Dropwizard configuration - CURRENT STATE (legacy)
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+  adminConnectors:
+    - type: http
+      port: 8081
+
+# jOOQ runs over this JDBC datasource (self-managed PostgreSQL)
+database:
+  driverClass: org.postgresql.Driver
+  user: catalog
+  password: catalog
+  url: jdbc:postgresql://db.internal.lgi:5432/catalog
+  properties:
+    charSet: UTF-8
+  maxWaitForConnection: 1s
+  validationQuery: "SELECT 1"
+  minSize: 8
+  maxSize: 32
+
+# Hazelcast in-cluster cache (simulates the Netflix Hollow in-memory catalog)
+hazelcastClusterName: catalog-cluster
+hazelcastCatalogMap: catalog-titles
+
+# MaxMind GeoIP database on the local/NFS filesystem
+geoIpDatabasePath: /mnt/nfs/geoip/GeoLite2-Country.mmdb
+
+# Artwork blobs served straight off the NFS mount
+artworkNfsPath: /mnt/nfs/artwork
+
+# Raw Kafka client - plain JSON playback events (NOT CloudEvents yet)
+kafkaBootstrapServers: kafka-1.internal.lgi:9092,kafka-2.internal.lgi:9092
+playbackEventsTopic: playback-authorizations
