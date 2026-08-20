@@ -1,108 +1,108 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  MODERNIZED (target state). Java 17/Dropwizard 4 -> Java 21 / Spring Boot 3.3.
+  Legacy build was a Dropwizard fat-jar (dropwizard-core, jersey javax.ws.rs).
+  Target uses the Spring Boot parent + starters; Resilience4j is RETAINED but
+  reconfigured via the Spring Cloud Circuit Breaker starter + application.yml.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.lgi.catalog</groupId>
-    <artifactId>catalog-entitlement-service</artifactId>
-    <version>1.4.0</version>
-    <packaging>jar</packaging>
-    <name>LGI Catalog &amp; Entitlement Service (legacy)</name>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
 
-    <!--
-      DEMO NOTE: This is the CURRENT-STATE ("before") service for the AWS Transform demo.
-      Legacy stack: Java 17, Dropwizard 2.x (JAX-RS), jOOQ, Hazelcast, MaxMind GeoIP,
-      Resilience4j, raw Kafka client, NFS filesystem storage.
-    -->
+    <groupId>com.lgi.catalog</groupId>
+    <artifactId>catalog-entitlement</artifactId>
+    <version>2.0.0</version>
+    <name>LGI Catalog &amp; Entitlement Service</name>
+    <description>Modernized: Java 21 / Spring Boot 3 on Amazon EKS, Aurora PostgreSQL, ElastiCache, MSK, S3</description>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.1.10</dropwizard.version>
-        <jooq.version>3.18.7</jooq.version>
-        <hazelcast.version>5.3.6</hazelcast.version>
-        <resilience4j.version>1.7.1</resilience4j.version>
-        <kafka.version>3.6.1</kafka.version>
-        <maxmind.version>4.2.0</maxmind.version>
+        <java.version>21</java.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
     </properties>
 
     <dependencies>
+        <!-- Web (replaces Dropwizard/Jersey JAX-RS) -->
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-core</artifactId>
-            <version>${dropwizard.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-jdbi3</artifactId>
-            <version>${dropwizard.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Data: jOOQ/manual JDBC -> Spring Data JDBC on Aurora PostgreSQL -->
         <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>jooq</artifactId>
-            <version>${jooq.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <scope>runtime</scope>
         </dependency>
 
+        <!-- Cache: Hazelcast near-cache -> Amazon ElastiCache (Redis) -->
         <dependency>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast</artifactId>
-            <version>${hazelcast.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- Messaging: raw Kafka producer -> Spring Kafka on Amazon MSK -->
         <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-circuitbreaker</artifactId>
-            <version>${resilience4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-retry</artifactId>
-            <version>${resilience4j.version}</version>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
 
+        <!-- Resilience: RETAINED Resilience4j, now via Spring Cloud starter -->
         <dependency>
-            <groupId>com.maxmind.geoip2</groupId>
-            <artifactId>geoip2</artifactId>
-            <version>${maxmind.version}</version>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
         </dependency>
 
+        <!-- Artwork: NFS mount -> Amazon S3 (AWS SDK v2) -->
         <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.28.11</version>
+        </dependency>
+
+        <!-- Observability: OpenTelemetry + Micrometer -> CloudWatch -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-cloudwatch2</artifactId>
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
-        <finalName>catalog-entitlement-service</finalName>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>com.lgi.catalog.CatalogEntitlementApplication</mainClass>
-                        </transformer>
-                    </transformers>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
-                    </execution>
-                </executions>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

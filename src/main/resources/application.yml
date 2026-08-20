@@ -1,0 +1,48 @@
+# MODERNIZED (target state) — Spring Boot 3 externalized config.
+# Legacy Dropwizard config.yml -> Spring application.yml. Resilience4j is RETAINED
+# but moves from programmatic construction to declarative config here.
+spring:
+  application:
+    name: catalog-entitlement
+  datasource:                       # jOOQ + self-managed PostgreSQL -> Aurora PostgreSQL
+    url: jdbc:postgresql://${AURORA_ENDPOINT}:5432/catalog
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}        # sourced from AWS Secrets Manager via IRSA
+  data:
+    redis:                          # Hazelcast near-cache -> Amazon ElastiCache (Redis)
+      host: ${ELASTICACHE_ENDPOINT}
+      port: 6379
+  kafka:                            # raw Kafka producer -> Spring Kafka on Amazon MSK
+    bootstrap-servers: ${MSK_BOOTSTRAP}
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: AWS_MSK_IAM
+
+# Resilience4j — same policy as the legacy programmatic config, now declarative
+resilience4j:
+  circuitbreaker:
+    instances:
+      entitlement-db:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        sliding-window-size: 20
+  retry:
+    instances:
+      entitlement-db:
+        max-attempts: 3
+        wait-duration: 200ms
+
+# Observability — OpenTelemetry + Micrometer -> Amazon CloudWatch
+management:
+  endpoints.web.exposure.include: health,info,prometheus,metrics
+  metrics.export.cloudwatch:
+    namespace: LGI/CatalogEntitlement
+    enabled: true
+
+aws:
+  s3:
+    artwork-bucket: ${ARTWORK_BUCKET}   # NFS artwork mount -> Amazon S3
+  region: ${AWS_REGION:eu-west-1}
+
+server:
+  port: 8080
