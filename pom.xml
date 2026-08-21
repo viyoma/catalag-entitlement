@@ -17,14 +17,14 @@
     -->
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.1.10</dropwizard.version>
-        <jooq.version>3.18.7</jooq.version>
-        <hazelcast.version>5.3.6</hazelcast.version>
-        <resilience4j.version>1.7.1</resilience4j.version>
-        <kafka.version>3.6.1</kafka.version>
+        <dropwizard.version>4.0.7</dropwizard.version>
+        <jooq.version>3.19.6</jooq.version>
+        <hazelcast.version>5.4.0</hazelcast.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
+        <kafka.version>3.9.2</kafka.version>
         <maxmind.version>4.2.0</maxmind.version>
     </properties>
 
@@ -48,7 +48,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.1</version>
+            <version>42.7.12</version>
         </dependency>
 
         <dependency>
@@ -84,6 +84,15 @@
     <build>
         <finalName>catalog-entitlement-service</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
