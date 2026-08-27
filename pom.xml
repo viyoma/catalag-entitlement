@@ -17,10 +17,10 @@
     -->
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.version>2.1.10</dropwizard.version>
+        <dropwizard.version>4.0.7</dropwizard.version>
         <jooq.version>3.18.7</jooq.version>
         <hazelcast.version>5.3.6</hazelcast.version>
         <resilience4j.version>1.7.1</resilience4j.version>
@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-jdbi3</artifactId>
+            <artifactId>dropwizard-db</artifactId>
             <version>${dropwizard.version}</version>
         </dependency>
 
