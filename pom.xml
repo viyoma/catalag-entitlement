@@ -26,7 +26,20 @@
         <resilience4j.version>2.2.0</resilience4j.version>
         <kafka.version>3.9.2</kafka.version>
         <maxmind.version>4.2.0</maxmind.version>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
