@@ -115,3 +115,5 @@ S3 bucket defect found on 2026-08-20. Not fixed here — recorded as a known tra
 - **Stale transform name in the UI.** `frontend/src/pages/WorkflowPage.tsx:419` still offers
   `AWS/java-upgrade`, which is not a real definition; the authoritative catalogue uses
   `AWS/java-version-upgrade`. Not on the execution path, but it is selectable by a human.
+
+- 2026-08-28T01:54:00Z — U4 invariant-test safety net implemented as the fourth review commit. Added five executable decision-path tests covering catalog absence, region blocking, device blocking, inactive entitlement, and successful authorization/event publication. U4 is harness-authored and intentionally separate from the ATX-automated U1–U3 units.

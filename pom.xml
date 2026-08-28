@@ -91,6 +91,20 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>1.15.12</version>
         </dependency>
+
+        <!-- U4 invariant-test safety net -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.15.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

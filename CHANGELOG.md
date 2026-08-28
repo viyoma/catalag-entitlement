@@ -2,6 +2,19 @@
 
 This changelog maps each AIDLC delivery unit to one reviewable commit. Every entry explains the technical change, customer impact, delivery mode, and verification evidence.
 
+## U4 — Invariant test safety net
+
+- **Why:** The comprehensive analysis found zero regression coverage, making future modernization unsafe despite successful compilation.
+- **What changed:**
+  - Added JUnit 5 and Mockito test support.
+  - Added five executable entitlement invariants: missing catalog title, blocked region, unsupported device, inactive subscription, and successful authorization.
+  - Verified successful decisions publish the playback authorization event.
+  - Used the container-safe Mockito subclass engine for deterministic Java 21 execution.
+  - Recorded the U4 decision and evidence in the AIDLC audit.
+- **User impact:** No production behavior changed. The tests protect the existing allow/deny contract so later modernization can detect regressions before release.
+- **Delivery mode:** Harness-authored, engineer-reviewable safety-net unit.
+- **Verification:** Five tests passed with zero failures/errors and the shaded Java 21 package built successfully using Maven 3.9.9.
+
 ## U3 — Observability uplift
 
 - **Why:** The service lacked sufficient operational evidence for decision outcomes, request latency, database reachability, and resilience state.
