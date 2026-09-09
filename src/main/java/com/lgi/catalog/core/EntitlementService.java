@@ -9,6 +9,9 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 import java.time.Duration;
 import java.util.Set;
@@ -32,16 +35,21 @@ public class EntitlementService {
     private final CircuitBreaker dbBreaker;
     private final Retry dbRetry;
 
+    private final MeterRegistry meterRegistry;
+    private final Timer decisionTimer;
+
     public EntitlementService(EntitlementDao dao,
                               HollowCatalogCache catalogCache,
                               GeoIpService geoIp,
                               ArtworkStore artworkStore,
-                              PlaybackEventProducer producer) {
+                              PlaybackEventProducer producer,
+                              MeterRegistry meterRegistry) {
         this.dao = dao;
         this.catalogCache = catalogCache;
         this.geoIp = geoIp;
         this.artworkStore = artworkStore;
         this.producer = producer;
+        this.meterRegistry = meterRegistry;
 
         this.dbBreaker = CircuitBreaker.of("entitlement-db", CircuitBreakerConfig.custom()
                 .failureRateThreshold(50)
@@ -52,24 +60,43 @@ public class EntitlementService {
                 .maxAttempts(3)
                 .waitDuration(Duration.ofMillis(200))
                 .build());
+
+        this.decisionTimer = Timer.builder("entitlement_decision_duration_seconds")
+                .register(meterRegistry);
+
+        meterRegistry.gauge("entitlement_db_circuit_state", dbBreaker, b -> {
+            switch (b.getState()) {
+                case OPEN: return 1;
+                case HALF_OPEN: return 2;
+                default: return 0;
+            }
+        });
     }
 
     public EntitlementDecision decide(String titleId, String subscriberId,
                                       String clientIp, String deviceType) {
+        return decisionTimer.record(() -> doDecide(titleId, subscriberId, clientIp, deviceType));
+    }
+
+    private EntitlementDecision doDecide(String titleId, String subscriberId,
+                                         String clientIp, String deviceType) {
         // 1. Catalog check (Hazelcast-backed Hollow cache)
         Title title = catalogCache.findTitle(titleId);
         if (title == null) {
+            recordDenial("TITLE_NOT_IN_CATALOG");
             return EntitlementDecision.deny(titleId, subscriberId, "TITLE_NOT_IN_CATALOG");
         }
 
         // 2. Region check (MaxMind GeoIP)
         String country = geoIp.countryIso(clientIp);
         if (!title.allowedCountries().contains(country)) {
+            recordDenial("REGION_BLOCKED");
             return EntitlementDecision.deny(titleId, subscriberId, "REGION_BLOCKED:" + country);
         }
 
         // 3. Device check
         if (!isDeviceAllowed(title, deviceType)) {
+            recordDenial("DEVICE_NOT_ALLOWED");
             return EntitlementDecision.deny(titleId, subscriberId, "DEVICE_NOT_ALLOWED:" + deviceType);
         }
 
@@ -79,6 +106,7 @@ public class EntitlementService {
                         () -> dao.hasActiveEntitlement(subscriberId, title.productId())));
 
         if (!entitled.get()) {
+            recordDenial("NO_ACTIVE_ENTITLEMENT");
             return EntitlementDecision.deny(titleId, subscriberId, "NO_ACTIVE_ENTITLEMENT");
         }
 
@@ -87,7 +115,20 @@ public class EntitlementService {
         EntitlementDecision decision =
                 EntitlementDecision.allow(titleId, subscriberId, country, artworkUri);
         producer.publishAuthorization(decision);
+        Counter.builder("entitlement_decisions_total")
+                .tag("outcome", "allowed")
+                .tag("reason", "")
+                .register(meterRegistry)
+                .increment();
         return decision;
+    }
+
+    private void recordDenial(String reasonFamily) {
+        Counter.builder("entitlement_decisions_total")
+                .tag("outcome", "denied")
+                .tag("reason", reasonFamily)
+                .register(meterRegistry)
+                .increment();
     }
 
     private boolean isDeviceAllowed(Title title, String deviceType) {
