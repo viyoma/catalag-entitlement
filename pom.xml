@@ -11,8 +11,8 @@
     <name>LGI Catalog &amp; Entitlement Service (legacy)</name>
 
     <!--
-      DEMO NOTE: This is the CURRENT-STATE ("before") service for the AWS Transform demo.
-      Legacy stack: Java 17, Dropwizard 2.x (JAX-RS), jOOQ, Hazelcast, MaxMind GeoIP,
+      DEMO NOTE: Modernized service for the AWS Transform demo.
+      Stack: Java 21, Dropwizard 4.x (JAX-RS / Jakarta), jOOQ, Hazelcast, MaxMind GeoIP,
       Resilience4j, raw Kafka client, NFS filesystem storage.
     -->
 
